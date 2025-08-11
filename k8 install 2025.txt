@@ -119,9 +119,42 @@ Run a Test Deployment
 Access via:
 http://<Any_Node_Public_IP>:<NodePort>
 
+Scale the Deployment
 
+            # Scale up to 5 replicas
+            kubectl scale deployment nginx-demo --replicas=5
+            
+            # Check if pods scaled
+            kubectl get pods -o wide
 
+Update the Deployment
 
+            # Update the image from nginx:latest to nginx:1.25
+            kubectl set image deployment/nginx-demo nginx=nginx:1.25 --record
+            
+            # Check rollout status
+            kubectl rollout status deployment/nginx-demo
+            
+            # View history of changes
+            kubectl rollout history deployment/nginx-demo
+
+💡 If something goes wrong:
+
+            # Rollback to previous version
+            kubectl rollout undo deployment/nginx-demo
+
+Delete the Deployment
+
+            # Delete deployment
+            kubectl delete deployment nginx-demo
+            
+            # Delete service
+            kubectl delete svc nginx-demo
+            
+            # Confirm all resources are gone
+            kubectl get all
+
+=====================================================================================
 
 
 
