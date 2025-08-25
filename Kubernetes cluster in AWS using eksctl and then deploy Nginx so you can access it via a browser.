@@ -1,0 +1,99 @@
+Kubernetes cluster in AWS using eksctl and then deploy Nginx so you can access it via a browser.
+
+Steps:
+1.	Install Required Tools (latest stable, tested versions)
+    a.	As a pre requisite we need to have AWS Instance up and running,(t2.medium recommended) Master node
+    b.	Now login into instance with SSH by gitbash.
+    c.	Use following command and set hostname to Master.
+    	    sudo hostnamectl set-hostname Master
+    exit
+    re login into instance.
+
+Run these on your local machine 
+    # Update system
+
+      sudo apt update && sudo apt upgrade -y
+
+    # Install AWS CLI v2
+
+			sudo apt install unzip -y 
+	    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      unzip awscliv2.zip
+      sudo ./aws/install
+      aws –version
+
+    # Install kubectl (match EKS version, example: 1.29)
+		
+      curl -o kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.29.0/2024-01-04/bin/linux/amd64/kubectl
+      chmod +x ./kubectl
+      sudo mv ./kubectl /usr/local/bin/
+      kubectl version --client
+
+    # Install eksctl (latest stable)
+
+      curl --silent --location "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+      sudo mv /tmp/eksctl /usr/local/bin
+      eksctl version
+
+2.	Configure AWS CLI
+
+Make sure you have an IAM user with AdministratorAccess or at least EKS permissions.
+
+Steps:
+•	Go to IAM in AWS > Users > Create user, click on create user.
+•	Enter username > Attach polices directly > search select AdministratorAccess > Create user.
+•	In users page, click on your user > create access key > CLI > create access key.
+•	Download csv or save Access key and Secret key for future usage.
+
+Run these commands:
+			aws configure
+Provide:
+•	AWS Access Key
+•	AWS Secret Key
+•	Default region (example: us-east-1)
+•	Output format (json)
+
+To verify:
+      aws sts get-caller-identity
+
+3.	Create an EKS Cluster with eksctl
+Run the following command which will create 1 worker node fully operated by aws
+
+eksctl create cluster \
+  --name project-cluster \
+  --region us-east-1 \
+  --version 1.29 \
+  --nodes 1 \
+  --node-type t2.medium \
+  --nodes-min 1 \
+  --nodes-max 2 \
+  --managed
+
+Wait for few minutes (up to 15 min)
+
+4.	Verify Cluster
+ 	Run these commands to check nodes and pods are ready
+
+			kubectl get nodes
+			kubectl get pods -A
+
+5.	Deploy Nginx
+	Run this command to deploy Nginx application in Master node.
+      kubectl create deployment nginx --image=nginx --replicas=2
+      kubectl expose deployment nginx --port=80 --type=LoadBalancer
+
+Check service:
+	    kubectl get svc
+
+6.	Access in Browser
+
+Take the EXTERNAL-IP (ELB DNS name) and open in browser:
+
+http://a67271ac38ae7428f8cd58d7892ccd26-1001945338.us-east-1.elb.amazonaws.com
+			You’ll see the default Nginx welcome page 🎉
+
+Step 7 (Optional): Clean Up
+	    eksctl delete cluster --name project-cluster --region us-east-1
+
+*************************************************************************************************************
+
